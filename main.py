@@ -3,8 +3,8 @@ from discord.ext import commands, tasks
 import asyncio
 import datetime
 
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+import os
+TOKEN = os.environ.get("DISCORD_TOKEN")
 TARGET_USER_ID = 123456789012345678  
 CHANNEL_ID = 987654321098765432      
 
