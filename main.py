@@ -3,7 +3,8 @@ from discord.ext import commands, tasks
 import asyncio
 import datetime
 
-TOKEN = "YOUR_BOT_TOKEN"
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
 TARGET_USER_ID = 123456789012345678  
 CHANNEL_ID = 987654321098765432      
 
