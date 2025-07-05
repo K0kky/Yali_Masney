@@ -87,4 +87,9 @@ async def on_presence_update(before, after):
             message_task.cancel()
             print("メッセージタスクをキャンセルしました")
 
-bot.run(TOKEN)
+@client.event
+async def on_ready():
+    print(f"ログインしました: {client.user}")
+    client.loop.create_task(mention_loop())
+
+client.run(TOKEN)
