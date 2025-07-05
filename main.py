@@ -8,12 +8,12 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 # =====================
-TARGET_USER_ID = 123456789012345678  # 対象ユーザーのID
-CHANNEL_ID = 987654321098765432     # メッセージ送信チャンネルID
-MENTION_WORD = "起きてますか？"      # メンション時のワード
-START_TIME = time(9, 0)             # 開始時刻（09:00）
-END_TIME = time(23, 0)              # 終了時刻（23:00）
-INTERVAL = 600                      # 10分（600秒）
+TARGET_USER_ID = 927414765280694283  # 対象ユーザーのID
+CHANNEL_ID = 1390661811967361094     # メッセージ送信チャンネルID
+MENTION_WORD = "寝ろスギ"      # メンション時のワード
+START_TIME = time(23, 0)             # 開始時刻（09:00）
+END_TIME = time(0, 0)              # 終了時刻（23:00）
+INTERVAL = 300                      # 10分（600秒）
 # =======================
 
 intents = discord.Intents.default()
