@@ -1,92 +1,51 @@
 import discord
-from discord.ext import commands, tasks
 import asyncio
-import datetime
-
 import os
-TOKEN = os.environ.get("DISCORD_TOKEN")
-TARGET_USER_ID = 123456789012345678  
-CHANNEL_ID = 987654321098765432      
+from datetime import datetime, time
+from dotenv import load_dotenv
 
-START_HOUR = 18
-END_HOUR = 23
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+# =====================
+TARGET_USER_ID = 123456789012345678  # 対象ユーザーのID
+CHANNEL_ID = 987654321098765432     # メッセージ送信チャンネルID
+MENTION_WORD = "起きてますか？"      # メンション時のワード
+START_TIME = time(9, 0)             # 開始時刻（09:00）
+END_TIME = time(23, 0)              # 終了時刻（23:00）
+INTERVAL = 600                      # 10分（600秒）
+# =======================
 
 intents = discord.Intents.default()
-intents.presences = True
-intents.members = True
+intents.presences = True  
+intents.members = True    
 
-bot = commands.Bot(command_prefix="!", intents=intents)
-
+client = discord.Client(intents=intents)
 
 user_online = False
+task_running = False
 
-message_task = None
+async def mention_loop():
+    global user_online, task_running
+    await client.wait_until_ready()
+    channel = client.get_channel(CHANNEL_ID)
+    user = await client.fetch_user(TARGET_USER_ID)
 
-def is_in_time_range():
-    now = datetime.datetime.now().time()
-    start = datetime.time(START_HOUR, 0, 0)
-    end = datetime.time(END_HOUR, 0, 0)
-    # 時間帯判定（start <= now < end）
-    if start <= now < end:
-        return True
-    else:
-        return False
-
-async def send_periodic_message(channel, user):
-    while True:     
-        await asyncio.sleep(600)
-        if not is_in_time_range():
-            print("時間外のためメッセージ送信停止")
-            break
-        member = channel.guild.get_member(user.id)
-        if member is None or member.status == discord.Status.offline:
-            print("ユーザーがオフラインのためメッセージ送信停止")
-            break
-        try:
-            await channel.send(f"{user.mention} ここに特定のメッセージを入れてください！")
-            print("メッセージ送信")
-        except Exception as e:
-            print(f"送信失敗: {e}")
-
-@bot.event
-async def on_ready():
-    print(f"Bot 起動完了: {bot.user}")
-
-@bot.event
-async def on_presence_update(before, after):
-    global user_online, message_task
-
-    if after.id != TARGET_USER_ID:
-        return
-
-    if not is_in_time_range():
-        return
-
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel is None:
-        print("指定チャンネルが見つかりません")
-        return
-
-    # オンラインになったら
-    if after.status != discord.Status.offline and (before.status == discord.Status.offline or before.status is None):
-        print(f"{after.name} がオンラインになりました")
-        user_online = True
-
-        # すでにタスクが動いてたらキャンセルしてから作り直す
-        if message_task is not None and not message_task.done():
-            message_task.cancel()
-            print("既存のメッセージタスクをキャンセル")
-
-        message_task = bot.loop.create_task(send_periodic_message(channel, after))
-    
-    # オフラインになったら
-    elif after.status == discord.Status.offline and before.status != discord.Status.offline:
-        print(f"{after.name} がオフラインになりました")
-        user_online = False
-        if message_task is not None and not message_task.done():
-            message_task.cancel()
-            print("メッセージタスクをキャンセルしました")
-
+    while True:
+        now = datetime.now().time()
+        if START_TIME <= now <= END_TIME:
+            member = channel.guild.get_member(TARGET_USER_ID)
+            if member and member.status == discord.Status.online:
+                if not task_running:
+                    print(f"{member.display_name} がオンラインになったのでメンションを開始します。")
+                    task_running = True
+                    while member.status == discord.Status.online and START_TIME <= datetime.now().time() <= END_TIME:
+                        await channel.send(f"{user.mention} {MENTION_WORD}")
+                        await asyncio.sleep(INTERVAL)
+                    print("ユーザーがオフラインになったか、時間外になったため停止。")
+                    task_running = False
+        await asyncio.sleep(30)  # チェック間隔（30秒）
+        
 @client.event
 async def on_ready():
     print(f"ログインしました: {client.user}")
